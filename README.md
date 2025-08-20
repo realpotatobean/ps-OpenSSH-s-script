@@ -1,4 +1,4 @@
-# SSH Server Setup Guide for Windows
+# OpenSSH Server Setup Guide Using a PowerShell Script
 
 This README.md explains how to set up and use a secure SSH server created with PowerShell.
 
