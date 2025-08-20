@@ -1,12 +1,6 @@
 # SSH Server Setup Guide for Windows
 
-This guide explains how to set up and use the secure SSH server created with PowerShell.
-
-## Prerequisites
-
-- Windows 10 version 1809 or later, or Windows Server 2019 or later
-- Administrator privileges
-- PowerShell 5.1 or later
+This READNE.md explains how to set up and use a secure SSH server created with PowerShell.
 
 ## Quick Start
 
