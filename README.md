@@ -1,6 +1,6 @@
 # SSH Server Setup Guide for Windows
 
-This READNE.md explains how to set up and use a secure SSH server created with PowerShell.
+This README.md explains how to set up and use a secure SSH server created with PowerShell.
 
 ## Quick Start
 
