@@ -27,17 +27,32 @@ This will:
 
 ## Usage Examples
 
-### Basic Installation with Default Settings
+### Basic Installation with Password Setup
+```powershell
+.\simple-OpenSSH-Server.ps1 -Action Install -SetPassword
+```
+
+### Install with Specific Password
+```powershell
+.\simple-OpenSSH-Server.ps1 -Action Install -SetPassword -CustomPassword "MySecurePassword123!"
+```
+
+### Install with Custom Port and Password
+```powershell
+.\simple-OpenSSH-Server.ps1 -Action Install -Port 2222 -SetPassword
+```
+
+### Configure Existing SSH Server with New Password
+```powershell
+.\simple-OpenSSH-Server.ps1 -Action Configure -SetPassword
+```
+
+### Install Without Password (Warning Mode)
 ```powershell
 .\simple-OpenSSH-Server.ps1 -Action Install
 ```
 
-### Install on Custom Port
-```powershell
-.\simple-OpenSSH-Server.ps1 -Action Install -Port 2222
-```
-
-### Install with Password Authentication Disabled (Key-only)
+### Install with Key Authentication Only
 ```powershell
 .\simple-OpenSSH-Server.ps1 -Action Install -DisablePasswordAuth
 ```
@@ -83,6 +98,17 @@ This will:
 - **Root login disabled**: No administrator remote login by default
 - **Session limits**: Maximum 10 concurrent sessions
 - **Connection timeouts**: Idle connections terminated after 5 minutes
+
+## Security Features
+- **Secure Password Input**: Hidden password entry during interactive setup
+- **Memory Protection**: Password cleared from memory after use
+- **Password Validation**: Warnings when no password is configured
+- **Enhanced SSH Configuration**: 
+  - Disabled root login
+  - Limited authentication attempts (3 max)
+  - Connection timeouts and limits
+  - User/group restrictions
+  - Comprehensive logging
 
 ### Network Security
 - **Firewall integration**: Automatic Windows Firewall configuration
