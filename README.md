@@ -99,7 +99,7 @@ This will:
 - **Session limits**: Maximum 10 concurrent sessions
 - **Connection timeouts**: Idle connections terminated after 5 minutes
 
-## Security Features
+### Password Security
 - **Secure Password Input**: Hidden password entry during interactive setup
 - **Memory Protection**: Password cleared from memory after use
 - **Password Validation**: Warnings when no password is configured
