@@ -22,7 +22,13 @@ param(
     [switch]$EnableKeyAuth = $true,
     
     [Parameter(Mandatory=$false)]
-    [switch]$DisablePasswordAuth = $false
+    [switch]$DisablePasswordAuth = $false,
+    
+    [Parameter(Mandatory=$false)]
+    [string]$CustomPassword = "",
+    
+    [Parameter(Mandatory=$false)]
+    [switch]$SetPassword = $false
 )
 
 #---------------------------------------------------------------------------------
@@ -193,6 +199,82 @@ Subsystem sftp sftp-server.exe
 
 #---------------------------------------------------------------------------------
 
+# Password Setup Function
+
+#-  Sets up password authentication for SSH access
+#-  Prompts for password if not provided via parameter
+#-  Uses Windows net user command to set the password
+
+function Setup-SSHPassword {
+    Write-Host "Setting up SSH password authentication..." -ForegroundColor Green
+    
+    $targetUser = $AllowUsers.Split(',')[0].Trim()  # Get first allowed user
+    
+    if ($SetPassword) {
+        $password = ""
+        
+        if ($CustomPassword -ne "") {
+            $password = $CustomPassword
+            Write-Host "Using provided custom password for user: $targetUser" -ForegroundColor Yellow
+        }
+        else {
+            # Prompt for password securely
+            Write-Host "Enter a password for SSH user '$targetUser':" -ForegroundColor Yellow
+            $securePassword = Read-Host -AsSecureString "Password"
+            $password = [Runtime.InteropServices.Marshal]::PtrToStringAuto([Runtime.InteropServices.Marshal]::SecureStringToBSTR($securePassword))
+            
+            if ($password -eq "") {
+                Write-Host "No password provided. Skipping password setup." -ForegroundColor Red
+                return
+            }
+        }
+        
+        # Set the password for the user
+        try {
+            $processInfo = New-Object System.Diagnostics.ProcessStartInfo
+            $processInfo.FileName = "net"
+            $processInfo.Arguments = "user $targetUser `"$password`""
+            $processInfo.UseShellExecute = $false
+            $processInfo.RedirectStandardOutput = $true
+            $processInfo.RedirectStandardError = $true
+            $processInfo.CreateNoWindow = $true
+            
+            $process = [System.Diagnostics.Process]::Start($processInfo)
+            $process.WaitForExit()
+            
+            if ($process.ExitCode -eq 0) {
+                Write-Host "Password set successfully for user: $targetUser" -ForegroundColor Green
+                Write-Host "You can now connect via SSH using: ssh $targetUser@<IP_ADDRESS>" -ForegroundColor Cyan
+            }
+            else {
+                $error = $process.StandardError.ReadToEnd()
+                Write-Host "Failed to set password: $error" -ForegroundColor Red
+            }
+        }
+        catch {
+            Write-Host "Error setting password: $($_.Exception.Message)" -ForegroundColor Red
+        }
+        
+        # Clear password from memory
+        $password = $null
+    }
+    else {
+        Write-Host "Password setup skipped. Use -SetPassword flag to enable password configuration." -ForegroundColor Yellow
+        
+        # Check if user has a password
+        $userInfo = net user $targetUser 2>$null
+        if ($userInfo -match "Password required\s+No") {
+            Write-Host "WARNING: User '$targetUser' has no password set. SSH password authentication may not work." -ForegroundColor Red
+            Write-Host "Run the script again with -SetPassword flag to set a password." -ForegroundColor Yellow
+        }
+        else {
+            Write-Host "User '$targetUser' appears to have a password configured." -ForegroundColor Green
+        }
+    }
+}
+
+#---------------------------------------------------------------------------------
+
 # SSH Key Setup Function
 
 #-  Gets user's profile directory (C:\Users\username)
@@ -336,6 +418,7 @@ switch ($Action) {
     "Install" {
         Install-SSHServer
         Configure-SSHServer
+        Setup-SSHPassword
         if ($EnableKeyAuth) {
             Setup-SSHKeys
         }
@@ -344,6 +427,7 @@ switch ($Action) {
     }
     "Configure" {
         Configure-SSHServer
+        Setup-SSHPassword
         if ($EnableKeyAuth) {
             Setup-SSHKeys
         }
@@ -388,3 +472,31 @@ switch ($Action) {
 #8. Security permissions: icacls for Windows ACL management
 #9. Here-strings: @"..."@ for multi-line text with variable substitution
 #10. Pipeline operations: | for chaining commands
+
+#---------------------------------------------------------------------------------
+
+# USAGE EXAMPLES:
+
+# 1. Install SSH server and set up password interactively:
+# .\simple-OpenSSH-Server.ps1 -Action Install -SetPassword
+
+# 2. Install SSH server with a specific password:
+# .\simple-OpenSSH-Server.ps1 -Action Install -SetPassword -CustomPassword "YourSecurePassword123!"
+
+# 3. Install SSH server with custom port and password:
+# .\simple-OpenSSH-Server.ps1 -Action Install -Port 2222 -SetPassword
+
+# 4. Configure existing SSH server with new password:
+# .\simple-OpenSSH-Server.ps1 -Action Configure -SetPassword
+
+# 5. Install SSH server without password (will show warning):
+# .\simple-OpenSSH-Server.ps1 -Action Install
+
+# 6. Install SSH server with only key authentication (no password):
+# .\simple-OpenSSH-Server.ps1 -Action Install -DisablePasswordAuth
+
+# After setup, connect from another device using:
+# ssh USERNAME@IP_ADDRESS
+# Example: ssh MSI@192.168.1.100
+
+#10. Pipeline operations: | for chainting
